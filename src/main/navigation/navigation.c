@@ -80,7 +80,7 @@ radar_pois_t radar_pois[RADAR_MAX_POIS];
 PG_REGISTER_ARRAY(navWaypoint_t, NAV_MAX_WAYPOINTS, nonVolatileWaypointList, PG_WAYPOINT_MISSION_STORAGE, 0);
 #endif
 
-PG_REGISTER_WITH_RESET_TEMPLATE(navConfig_t, navConfig, PG_NAV_CONFIG, 7);
+PG_REGISTER_WITH_RESET_TEMPLATE(navConfig_t, navConfig, PG_NAV_CONFIG, 8);
 
 PG_RESET_TEMPLATE(navConfig_t, navConfig,
     .general = {
@@ -115,6 +115,9 @@ PG_RESET_TEMPLATE(navConfig_t, navConfig,
         .rth_home_altitude = 0,                 // altitude in centimeters
         .rth_abort_threshold = 50000,           // centimeters - 500m should be safe for all aircraft
         .max_terrain_follow_altitude = 100,     // max altitude in centimeters in terrain following mode
+        .geofence_radius = 0,                   // distance in meters
+        .geofence_height = 0,                   // altitude in meters
+		.geofence_buffer = 10,                  // distance in meters
         .rth_home_offset_distance = 0,          // Distance offset from GPS established home to "safe" position used for RTH (cm, 0 disables)
         .rth_home_offset_direction = 0,         // Direction offset from GPS established home to "safe" position used for RTH (degrees, 0=N, 90=E, 180=S, 270=W, requires non-zero offset distance)
         },
@@ -189,6 +192,8 @@ uint16_t navEPH;
 uint16_t navEPV;
 int16_t navAccNEU[3];
 #endif
+
+static bool geofenceTriggered = false;
 
 static fpVector3_t * rthGetHomeTargetPosition(rthTargetMode_e mode);
 static void updateDesiredRTHAltitude(void);
@@ -3295,6 +3300,53 @@ void updateFlightBehaviorModifiers(void)
     posControl.flags.isGCSAssistedNavigationEnabled = IS_RC_MODE_ACTIVE(BOXGCSNAV);
 }
 
+bool isOutsideGeofence(void)
+{
+    return (navConfig()->general.geofence_radius > 0 && GPS_distanceToHome > navConfig()->general.geofence_radius) || (navConfig()->general.geofence_height > 0 && posControl.actualState.abs.pos.z > navConfig()->general.geofence_height * 100);
+}
+
+bool isInsideBufferedGeofence(void)
+{
+    uint32_t bufferedRadius = navConfig()->general.geofence_radius - navConfig()->general.geofence_buffer;
+    uint32_t bufferedHeight = navConfig()->general.geofence_height - navConfig()->general.geofence_buffer;
+    return GPS_distanceToHome < (bufferedRadius > 0 ? bufferedRadius : 0) && posControl.actualState.abs.pos.z < (bufferedHeight > 0 ? bufferedHeight : 0) * 100;
+}
+
+bool CheckStickMotion(void)
+{
+    if (failsafeConfig()->failsafe_stick_motion_threshold > 0) {
+        uint32_t totalRcDelta = 0;
+
+        totalRcDelta += ABS(rxGetChannelValue(ROLL) - PWM_RANGE_MIDDLE);
+        totalRcDelta += ABS(rxGetChannelValue(PITCH) - PWM_RANGE_MIDDLE);
+        totalRcDelta += ABS(rxGetChannelValue(YAW) - PWM_RANGE_MIDDLE);
+
+        return totalRcDelta >= failsafeConfig()->failsafe_stick_motion_threshold;
+    }
+    else {
+        return true;
+    }
+}
+
+void processGeofenceStatus(void)
+{
+    
+
+     if (!geofenceTriggered && isOutsideGeofence()) {
+        geofenceTriggered = true;
+        // No need to update status if F/S has already been enforced
+        if (getStateOfForcedRTH() == RTH_IDLE) {
+                activateForcedRTH();
+        }
+	// Only re-enable geofence if the aircraft gets back inside it
+     } else if (geofenceTriggered && isInsideBufferedGeofence() && !IS_RC_MODE_ACTIVE(BOXFAILSAFE) && CheckStickMotion()) {
+     //} else if (geofenceTriggered && isInsideBufferedGeofence()) {
+        geofenceTriggered = false;
+        abortForcedRTH();
+
+    }
+}
+
 /**
  * Process NAV mode transition and WP/RTH state machine
  *  Update rate: RX (data driven or 50Hz)
@@ -3312,6 +3364,9 @@ void updateWaypointsAndNavigationMode(void)
 
     // Update flight behaviour modifiers
     updateFlightBehaviorModifiers();
+
+    // F/S if out of geofence boundaries
+    processGeofenceStatus();
 
     // Process switch to a different navigation mode (if needed)
     navProcessFSMEvents(selectNavEventFromBoxModeInput());
