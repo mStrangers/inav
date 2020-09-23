@@ -117,7 +117,7 @@ PG_RESET_TEMPLATE(navConfig_t, navConfig,
         .max_terrain_follow_altitude = 100,     // max altitude in centimeters in terrain following mode
         .geofence_radius = 0,                   // distance in meters
         .geofence_height = 0,                   // altitude in meters
-		.geofence_buffer = 10,                  // distance in meters
+        .geofence_buffer = 10,                  // distance in meters
         .rth_home_offset_distance = 0,          // Distance offset from GPS established home to "safe" position used for RTH (cm, 0 disables)
         .rth_home_offset_direction = 0,         // Direction offset from GPS established home to "safe" position used for RTH (degrees, 0=N, 90=E, 180=S, 270=W, requires non-zero offset distance)
         },
