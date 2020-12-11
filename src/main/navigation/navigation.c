@@ -3300,11 +3300,14 @@ void updateFlightBehaviorModifiers(void)
     posControl.flags.isGCSAssistedNavigationEnabled = IS_RC_MODE_ACTIVE(BOXGCSNAV);
 }
 
+// TODO: split vertical and horizontal geofence reaction :ST
+//Function to check if we are outside of the horizontal and vertical geofence :ST
 bool isOutsideGeofence(void)
 {
     return (navConfig()->general.geofence_radius > 0 && GPS_distanceToHome > navConfig()->general.geofence_radius) || (navConfig()->general.geofence_height > 0 && posControl.actualState.abs.pos.z > navConfig()->general.geofence_height * 100);
 }
 
+//function to check if we are inside the goefence buffer :ST
 bool isInsideBufferedGeofence(void)
 {
     uint32_t bufferedRadius = navConfig()->general.geofence_radius - navConfig()->general.geofence_buffer;
@@ -3312,6 +3315,7 @@ bool isInsideBufferedGeofence(void)
     return GPS_distanceToHome < (bufferedRadius > 0 ? bufferedRadius : 0) && posControl.actualState.abs.pos.z < (bufferedHeight > 0 ? bufferedHeight : 0) * 100;
 }
 
+//function to check stick movement :ST
 bool CheckStickMotion(void)
 {
     if (failsafeConfig()->failsafe_stick_motion_threshold > 0) {
@@ -3328,6 +3332,7 @@ bool CheckStickMotion(void)
     }
 }
 
+//geofencing process function :ST
 void processGeofenceStatus(void)
 {
     
@@ -3340,7 +3345,7 @@ void processGeofenceStatus(void)
         }
 	// Only re-enable geofence if the aircraft gets back inside it
      } else if (geofenceTriggered && isInsideBufferedGeofence() && !IS_RC_MODE_ACTIVE(BOXFAILSAFE) && CheckStickMotion()) {
-     //} else if (geofenceTriggered && isInsideBufferedGeofence()) {
+     //} else if (geofenceTriggered && isInsideBufferedGeofence()) { //added disabling capatibility
         geofenceTriggered = false;
         abortForcedRTH();
 
