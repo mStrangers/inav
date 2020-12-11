@@ -545,6 +545,9 @@ void FAST_CODE mixTable(const float dT)
         throttleMax = MAX(throttleMax - (rpyMixRange / 2), throttleMin + (throttleRange / 2) + (throttleRange * THROTTLE_CLIPPING_FACTOR / 2));
     }
 
+    // add throttle limitation here 
+    // throttle cut mixerThrottleCommand = 0.0f
+    
     // Now add in the desired throttle, but keep in a range that doesn't clip adjusted
     // roll/pitch/yaw. This could move throttle down, but also up for those low throttle flips.
     if (ARMING_FLAG(ARMED)) {
