@@ -334,6 +334,9 @@
 | nav_rth_climb_ignore_emerg | OFF | If set to ON, aircraft will execute initial climb regardless of position sensor (GPS) status. |
 | nav_rth_home_altitude | 0 | Aircraft will climb/descend to this altitude after reaching home if landing is not enabled. Set to 0 to stay at `nav_rth_altitude` (default) [cm] |
 | nav_rth_tail_first | OFF | If set to ON drone will return tail-first. Obviously meaningless for airplanes. |
+| geofence_radius  | 0 | Radius of the cylinder centered on the home point out of which the aircraft will activate geofence breach . A value of 0 disables horizontal geofencing. [m] |
+| geofence_height  | 0 | Height of the cylinder centered on the home point out of which the aircraft will activate geofence breach. A value of 0 disables vertical geofencing. [m] |
+| geofence_buffer  | 10 | A threshold to limit the aircraft movement to let the pilot know his proximity with the breach.inside this zone (the value start towards the home point ) the throttle wil be lowered until the limit for the vertical limit, on the horizontal limit the aircraft swith to posHold in this zone and the pilot regain the control after this zone in case of breach. [m] |
 | nav_use_fw_yaw_control | OFF | Enables or Disables the use of the heading PID controller on fixed wing. Heading PID controller is always enabled for rovers and boats |
 | nav_use_midthr_for_althold | OFF | If set to OFF, the FC remembers your throttle stick position when enabling ALTHOLD and treats it as a neutral midpoint for holding altitude |
 | nav_user_control_mode | ATTI | Defines how Pitch/Roll input from RC receiver affects flight in POSHOLD mode: ATTI - pitch/roll controls attitude like in ANGLE mode; CRUISE - pitch/roll controls velocity in forward and right direction. |
