@@ -38,7 +38,7 @@
 
 #define USE_DUAL_GYRO
 
-#define USE_IMU_MPU6500
+/*#define USE_IMU_MPU6500
 #define IMU_0_ALIGN       CW90_DEG
 #define IMU_1_ALIGN       CW0_DEG
 
@@ -47,6 +47,19 @@
 
 #define MPU6500_1_CS_PIN        PA15
 #define MPU6500_1_SPI_BUS       BUS_SPI1
+*/
+#define USE_TARGET_IMU_HARDWARE_DESCRIPTORS
+#define USE_IMU_ICM42605
+
+
+#define IMU_ICM42688_0_ALIGN       CW90_DEG
+#define IMU_ICM42688_1_ALIGN       CW0_DEG
+
+#define ICM42688_0_CS_PIN        PC3
+#define ICM42688_0_SPI_BUS       BUS_SPI1
+
+#define ICM42688_1_CS_PIN        PA15
+#define ICM42688_1_SPI_BUS       BUS_SPI1
 
 // *************** I2C/Baro/Mag *********************
 #define USE_I2C
